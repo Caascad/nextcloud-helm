@@ -187,15 +187,17 @@ Create environment variables used to configure the nextcloud container as well a
   value: {{ template "nextcloud.redis.fullname" . }}-master
 - name: REDIS_HOST_PORT
   value: {{ .Values.redis.master.service.ports.redis | quote }}
-{{- if and .Values.redis.auth.existingSecret .Values.redis.auth.existingSecretPasswordKey }}
+{{- if .Values.redis.auth.enabled }}
 - name: REDIS_HOST_PASSWORD
   valueFrom:
     secretKeyRef:
+      {{- if and .Values.redis.auth.existingSecret .Values.redis.auth.existingSecretPasswordKey }}
       name: {{ .Values.redis.auth.existingSecret }}
       key: {{ .Values.redis.auth.existingSecretPasswordKey }}
-{{- else }}
-- name: REDIS_HOST_PASSWORD
-  value: {{ .Values.redis.auth.password }}
+      {{- else }}
+      name: {{ printf "%s-redis" .Release.Name | trunc 63 | trimSuffix "-" }}
+      key: "redis-password"
+      {{- end }}
 {{- end }}
 {{- end }}
 {{- if .Values.nextcloud.extraEnv }}
